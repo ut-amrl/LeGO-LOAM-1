@@ -54,7 +54,6 @@ private:
     Values initialEstimate;
     Values optimizedEstimate;
     ISAM2 *isam;
-    Values isamCurrentEstimate;
 
     noiseModel::Diagonal::shared_ptr priorNoise;
     noiseModel::Diagonal::shared_ptr odometryNoise;
@@ -221,7 +220,9 @@ private:
 
 public:
 
-    
+
+    std::vector<double> timestamps_;
+    Values isamCurrentEstimate;
 
     mapOptimization():
         nh("~")
@@ -1373,6 +1374,7 @@ public:
          * update grsam graph
          */
         if (cloudKeyPoses3D->points.empty()){
+            timestamps_.emplace_back(timeLaserOdometry);
             gtSAMgraph.add(PriorFactor<Pose3>(0, Pose3(Rot3::RzRyRx(transformTobeMapped[2], transformTobeMapped[0], transformTobeMapped[1]),
                                                        		 Point3(transformTobeMapped[5], transformTobeMapped[3], transformTobeMapped[4])), priorNoise));
             initialEstimate.insert(0, Pose3(Rot3::RzRyRx(transformTobeMapped[2], transformTobeMapped[0], transformTobeMapped[1]),
@@ -1381,6 +1383,7 @@ public:
             	transformLast[i] = transformTobeMapped[i];
         }
         else{
+            timestamps_.emplace_back(timeLaserOdometry);
             gtsam::Pose3 poseFrom = Pose3(Rot3::RzRyRx(transformLast[2], transformLast[0], transformLast[1]),
                                                 Point3(transformLast[5], transformLast[3], transformLast[4]));
             gtsam::Pose3 poseTo   = Pose3(Rot3::RzRyRx(transformAftMapped[2], transformAftMapped[0], transformAftMapped[1]),
@@ -1389,6 +1392,8 @@ public:
             initialEstimate.insert(cloudKeyPoses3D->points.size(), Pose3(Rot3::RzRyRx(transformAftMapped[2], transformAftMapped[0], transformAftMapped[1]),
                                                                      		   Point3(transformAftMapped[5], transformAftMapped[3], transformAftMapped[4])));
         }
+
+        ROS_INFO_STREAM("Timestamp count " << timestamps_.size());
         /**
          * update iSAM
          */
@@ -1413,6 +1418,8 @@ public:
         thisPose3D.z = latestEstimate.translation().x();
         thisPose3D.intensity = cloudKeyPoses3D->points.size(); // this can be used as index
         cloudKeyPoses3D->push_back(thisPose3D);
+        ROS_INFO_STREAM("Estimates count " << isamCurrentEstimate.size());
+
 
         thisPose6D.x = thisPose3D.x;
         thisPose6D.y = thisPose3D.y;
@@ -1498,7 +1505,10 @@ public:
 
             if (timeLaserOdometry - timeLastProcessing >= mappingProcessInterval) {
 
+                ROS_INFO_STREAM("Last time processing " << timeLastProcessing << ", new time processing " << timeLaserOdometry);
                 timeLastProcessing = timeLaserOdometry;
+//                timestamps_.push_back(timeLaserOdometry);
+                ROS_INFO_STREAM("Timestamp count " << timestamps_.size());
 
                 transformAssociateToMap();
 
@@ -1531,8 +1541,27 @@ int main(int argc, char** argv)
 
     mapOptimization MO;
 
+    ros::NodeHandle nh("~");
+
+    std::string scenario_str;
+    if (!nh.getParam("scenario_str", scenario_str)) {
+        auto t = std::time(nullptr);
+        auto tm = *std::localtime(&t);
+        std::ostringstream oss;
+        oss << std::put_time(&tm, "%d-%m-%Y_%H:%M:%S");
+        std::string time_str = oss.str();
+    }
+    ROS_INFO_STREAM("Scenario str is " << scenario_str);
+
+
     std::thread loopthread(&mapOptimization::loopClosureThread, &MO);
     std::thread visualizeMapThread(&mapOptimization::visualizeGlobalMapThread, &MO);
+
+    std::string dataset_augmentation_dir = "/home/amanda/momo_testing/LEGOLOAM_OUT";
+
+    std::string csv_file_name = dataset_augmentation_dir + "/scenario_" + scenario_str + "/legoloam_odom_output_file.csv";
+
+    int last_est_size = -1;
 
     ros::Rate rate(200);
     while (ros::ok())
@@ -1541,11 +1570,59 @@ int main(int argc, char** argv)
 
         MO.run();
 
+        int curr_estimate_size = MO.timestamps_.size();
+        if (curr_estimate_size != last_est_size) {
+            last_est_size = curr_estimate_size;
+            Values vals = MO.isamCurrentEstimate;
+            std::ofstream csv_file(csv_file_name, std::ofstream::trunc);
+            std::vector<double> timestamps = MO.timestamps_;
+            ROS_INFO_STREAM("Outputting to file " << csv_file_name);
+
+            csv_file << "Timestamp" << "," << "TranslX" << ", " << "TranslY" << ", " << "TranslZ" << ", "
+                     << "QuatW" << ", " << "QuatX" << ", " << "QuatY" << ", " << "QuatZ" << ", "
+                     << "NoiseVar1" << ", " << "NoiseVar2" << ", " << "NoiseVar3" << ", "
+                     << "NoiseVar4" << ", " << "NoiseVar5" << ", " << "NoiseVar6" << "\n";
+            for (int i = 0; i < curr_estimate_size; i++) {
+//                ROS_INFO_STREAM("Timestamp: " << MO.timestamps_[i]);
+                Pose3 pose_est = vals.at<Pose3>(i);
+                Quaternion quaternion = pose_est.rotation().toQuaternion();
+                csv_file << std::fixed << std::setprecision(6) << timestamps[i] << std::setprecision(8) << ","
+                << pose_est.translation().x() << ", " << pose_est.translation().y() << ", "
+                << pose_est.translation().z() << ", "
+                << quaternion.w() << ", " << quaternion.x() << ", "<< quaternion.y() << ", "<< quaternion.z() << ", "
+                << 1e-6 << ", " << 1e-6 << ", " << 1e-6 << ", "
+                << 1e-8 << ", " << 1e-8 << ", " << 1e-6 << "\n";
+
+//                ROS_INFO_STREAM("Pose " << pose_est.translation().x() << ", " << pose_est.translation().y() << ", "
+//                                        << pose_est.translation().z() << ", " << pose_est.rotation().pitch() << ", "
+//                                        << pose_est.rotation().yaw() <<
+//                                        ", " << pose_est.rotation().roll());
+            }
+            csv_file.close();
+        }
+//        ROS_INFO_STREAM("Estimates count " << MO.isamCurrentEstimate.size());
+
         rate.sleep();
     }
 
     loopthread.join();
     visualizeMapThread.join();
+//
+//    csv_file << "position_kernel_len" << ", " << "orientation_kernel_len"
+//             << ", " << "odometry_x_std_dev" << ", " << "odometry_y_std_dev" << ", "
+//             << "max_observable_moving_obj_distance" << ", "
+//             << "odometry_yaw_std_dev" << ", " << "movable_observation_x_std_dev" << ", "
+//             << "movable_observation_y_std_dev" << ", "
+//             << "movable_observation_yaw_std_dev" << ", "
+//             << "parking_lot_std_dev_x" << ", "
+//             << "parking_lot_std_dev_y" << ", "
+//             << "parking_lot_std_dev_yaw" << ", "
+//             << "parking_lot_percent_filled" << ", "  << "absolute_trajectory_error" << "\n";
+//
+
+
+
+//    csv_file.close();
 
     return 0;
 }
