@@ -10,7 +10,12 @@
 
 #include "cloud_msgs/cloud_info.h"
 
-#include <opencv/cv.h>
+// #if defined __has_include && __has_include(<opencv2/opencv.hpp>)
+//     #include <opencv2/opencv.hpp>
+// #else
+//     #include <opencv/cv.h>
+// #endif
+#include <opencv2/opencv.hpp>
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
