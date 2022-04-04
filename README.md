@@ -1,3 +1,11 @@
+# AMRL Modifications
+## Running on Ubuntu 20.04
+1. if you have opencv4, in utility.h, changed `#include <opencv/cv.h>` to `#include <opencv2/opencv.hpp>`
+1. in cmakefile, change `-std=c++11` to a higher version (e.g. c++17) for pcl-1.10+
+1. if you're using LeGO-LOAM's recommended gtsam version (4.0.0-alpha2), build gtsam with `cmake -DGTSAM_BUILD_WITH_MARCH_NATIVE=OFF -DGTSAM_USE_SYSTEM_EIGEN=ON ..`
+1. run `sudo ldconfig` if there's any gtsam ld error
+1. if you got error messages like "ld: cannot find -lBoost::xxx", in LeGO-LOAM's cmakefile, add `find_package(Boost 1.43 COMPONENTS serialization system filesystem thread program_options date_time timer chrono)`
+
 # LeGO-LOAM
 
 This repository contains code for a lightweight and ground optimized lidar odometry and mapping (LeGO-LOAM) system for ROS compatible UGVs. The system takes in point cloud  from a Velodyne VLP-16 Lidar (palced horizontally) and optional IMU data as inputs. It outputs 6D pose estimation in real-time. A demonstration of the system can be found here -> https://www.youtube.com/watch?v=O3tz_ftHV48
