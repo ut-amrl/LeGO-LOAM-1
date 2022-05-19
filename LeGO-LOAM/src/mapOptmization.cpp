@@ -54,7 +54,7 @@ private:
     Values initialEstimate;
     Values optimizedEstimate;
     ISAM2 *isam;
-    Values isamCurrentEstimate;
+    // Values isamCurrentEstimate;
 
     noiseModel::Diagonal::shared_ptr priorNoise;
     noiseModel::Diagonal::shared_ptr odometryNoise;
@@ -221,7 +221,8 @@ private:
 
 public:
 
-    
+    std::vector<double> timestamps;
+    Values isamCurrentEstimate;
 
     mapOptimization():
         nh("~")
@@ -1389,6 +1390,7 @@ public:
             initialEstimate.insert(cloudKeyPoses3D->points.size(), Pose3(Rot3::RzRyRx(transformAftMapped[2], transformAftMapped[0], transformAftMapped[1]),
                                                                      		   Point3(transformAftMapped[5], transformAftMapped[3], transformAftMapped[4])));
         }
+        timestamps.emplace_back(timeLaserOdometry);
         /**
          * update iSAM
          */
@@ -1534,12 +1536,36 @@ int main(int argc, char** argv)
     std::thread loopthread(&mapOptimization::loopClosureThread, &MO);
     std::thread visualizeMapThread(&mapOptimization::visualizeGlobalMapThread, &MO);
 
+    std::string out_dir = "/home/tiejean/Documents/projects/catkin_ws/out/LeGO-LOAM/";
+    std::string out_path = out_dir + "test.csv";
+    int last_est_size = -1;
+
     ros::Rate rate(200);
     while (ros::ok())
     {
         ros::spinOnce();
 
         MO.run();
+
+        int curr_estimate_size = MO.timestamps.size();
+        if (curr_estimate_size != last_est_size) {
+            std::vector<double> timestamps = MO.timestamps;
+            Values vals = MO.isamCurrentEstimate;
+            std::ofstream ofile;
+            ofile.open(out_path, std::ofstream::trunc);
+            if (!ofile.is_open()) {
+                std::cerr << "failed to open file: " << out_path << std::endl;
+                exit(1);
+            }
+            for (int i = 0; i < curr_estimate_size; i++) {
+                Pose3 pose_est = vals.at<Pose3>(i);
+                Quaternion quaternion = pose_est.rotation().toQuaternion();
+                ofile << std::fixed << std::setprecision(6) << timestamps[i] << std::setprecision(8) << ","
+                << pose_est.translation().x() << "," << pose_est.translation().y() << "," << pose_est.translation().z() << ","
+                << quaternion.w() << "," << quaternion.x() << ","<< quaternion.y() << ","<< quaternion.z() << std::endl;
+            }
+            ofile.close();
+        }
 
         rate.sleep();
     }
