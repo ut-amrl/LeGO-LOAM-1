@@ -248,7 +248,8 @@ public:
         pubRegisteredCloud = nh.advertise<sensor_msgs::PointCloud2>("/registered_cloud", 2);
 
         downSizeFilterCorner.setLeafSize(0.2, 0.2, 0.2);
-        downSizeFilterSurf.setLeafSize(0.4, 0.4, 0.4);
+        // downSizeFilterSurf.setLeafSize(0.4, 0.4, 0.4);
+        downSizeFilterSurf.setLeafSize(0.1, 0.1, 0.1);
         downSizeFilterOutlier.setLeafSize(0.4, 0.4, 0.4);
 
         downSizeFilterHistoryKeyFrames.setLeafSize(0.4, 0.4, 0.4); // for histor key frames of loop closure
@@ -745,7 +746,8 @@ public:
     	    *surfaceMapCloud += *transformPointCloud(surfCloudKeyFrames[i],     &cloudKeyPoses6D->points[i]);
     	    *surfaceMapCloud += *transformPointCloud(outlierCloudKeyFrames[i],  &cloudKeyPoses6D->points[i]);
         }
-
+        pcl::io::savePCDFileASCII("/home/tiejean/Documents/projects/catkin_ws/out/LeGO-LOAM/surfaceMap.pcd", *surfaceMapCloud);
+        cout << "saved to /home/tiejean/Documents/projects/catkin_ws/out/LeGO-LOAM/surfaceMap.pcd" << endl;
         downSizeFilterCorner.setInputCloud(cornerMapCloud);
         downSizeFilterCorner.filter(*cornerMapCloudDS);
         downSizeFilterSurf.setInputCloud(surfaceMapCloud);
@@ -787,9 +789,11 @@ public:
 	    // downsample visualized points
         downSizeFilterGlobalMapKeyFrames.setInputCloud(globalMapKeyFrames);
         downSizeFilterGlobalMapKeyFrames.filter(*globalMapKeyFramesDS);
+        pcl::io::savePCDFileASCII("/home/tiejean/Documents/projects/catkin_ws/out/LeGO-LOAM/globalMap.pcd", *globalMapKeyFrames);
  
         sensor_msgs::PointCloud2 cloudMsgTemp;
-        pcl::toROSMsg(*globalMapKeyFramesDS, cloudMsgTemp);
+        // pcl::toROSMsg(*globalMapKeyFramesDS, cloudMsgTemp);
+        pcl::toROSMsg(*globalMapKeyFrames, cloudMsgTemp);
         cloudMsgTemp.header.stamp = ros::Time().fromSec(timeLaserOdometry);
         cloudMsgTemp.header.frame_id = "camera_init";
         pubLaserCloudSurround.publish(cloudMsgTemp);  
