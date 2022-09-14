@@ -163,7 +163,7 @@ public:
     void copyPointCloud(const sensor_msgs::PointCloud2ConstPtr& laserCloudMsg){
 
         cloudHeader = laserCloudMsg->header;
-        // cloudHeader.stamp = ros::Time::now(); // Ouster lidar users may need to uncomment this line
+        cloudHeader.stamp = ros::Time::now(); // Ouster lidar users may need to uncomment this line
         pcl::fromROSMsg(*laserCloudMsg, *laserCloudIn);
         // Remove Nan points
         std::vector<int> indices;
@@ -179,7 +179,6 @@ public:
     }
     
     void cloudHandler(const sensor_msgs::PointCloud2ConstPtr& laserCloudMsg){
-
         // 1. Convert ros message to pcl point cloud
         copyPointCloud(laserCloudMsg);
         // 2. Start and end angle of a scan

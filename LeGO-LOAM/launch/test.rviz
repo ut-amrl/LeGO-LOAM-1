@@ -402,8 +402,8 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 23.08336067199707
-        Min Value: -3.9826507568359375
+        Max Value: 16.162843704223633
+        Min Value: -0.579573392868042
         Value: true
       Axis: Y
       Channel Name: intensity
@@ -411,7 +411,7 @@ Visualization Manager:
       Color: 255; 255; 255
       Color Transformer: AxisColor
       Decay Time: 0
-      Enabled: false
+      Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Min Color: 0; 0; 0
@@ -426,12 +426,12 @@ Visualization Manager:
       Unreliable: false
       Use Fixed Frame: false
       Use rainbow: false
-      Value: false
+      Value: true
     - Alpha: 0.5
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 6.6109619140625
-        Min Value: -0.9879293441772461
+        Max Value: 16.024682998657227
+        Min Value: -0.5826830267906189
         Value: true
       Axis: Y
       Channel Name: intensity
@@ -439,7 +439,7 @@ Visualization Manager:
       Color: 255; 255; 255
       Color Transformer: AxisColor
       Decay Time: 300
-      Enabled: true
+      Enabled: false
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Min Color: 0; 0; 0
@@ -454,7 +454,7 @@ Visualization Manager:
       Unreliable: false
       Use Fixed Frame: false
       Use rainbow: false
-      Value: true
+      Value: false
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:

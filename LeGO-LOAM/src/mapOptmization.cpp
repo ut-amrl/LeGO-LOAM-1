@@ -62,6 +62,8 @@ private:
 
     ros::NodeHandle nh;
 
+    ros::Publisher pubMap;
+
     ros::Publisher pubLaserCloudSurround;
     ros::Publisher pubOdomAftMapped;
     ros::Publisher pubKeyPoses;
@@ -234,6 +236,7 @@ public:
 
         pubKeyPoses = nh.advertise<sensor_msgs::PointCloud2>("/key_pose_origin", 2);
         pubLaserCloudSurround = nh.advertise<sensor_msgs::PointCloud2>("/laser_cloud_surround", 2);
+        pubMap = nh.advertise<sensor_msgs::PointCloud2>("/slam_map", 2);
         pubOdomAftMapped = nh.advertise<nav_msgs::Odometry> ("/aft_mapped_to_init", 5);
 
         subLaserCloudCornerLast = nh.subscribe<sensor_msgs::PointCloud2>("/laser_cloud_corner_last", 2, &mapOptimization::laserCloudCornerLastHandler, this);
@@ -759,10 +762,6 @@ public:
     }
 
     void publishGlobalMap(){
-
-        if (pubLaserCloudSurround.getNumSubscribers() == 0)
-            return;
-
         if (cloudKeyPoses3D->points.empty() == true)
             return;
 	    // kd-tree to find near key frames to visualize
@@ -797,6 +796,7 @@ public:
         cloudMsgTemp.header.stamp = ros::Time().fromSec(timeLaserOdometry);
         cloudMsgTemp.header.frame_id = "camera_init";
         pubLaserCloudSurround.publish(cloudMsgTemp);  
+        // cout << "pubLaserCloudSurround" << endl;
 
         globalMapKeyPoses->clear();
         globalMapKeyPosesDS->clear();
@@ -1550,7 +1550,7 @@ int main(int argc, char** argv)
         ros::spinOnce();
 
         MO.run();
-
+        #if 0
         int curr_estimate_size = MO.timestamps.size();
         if (curr_estimate_size != last_est_size) {
             std::vector<double> timestamps = MO.timestamps;
@@ -1570,6 +1570,7 @@ int main(int argc, char** argv)
             }
             ofile.close();
         }
+        #endif
 
         rate.sleep();
     }
