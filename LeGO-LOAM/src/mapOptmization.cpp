@@ -749,8 +749,8 @@ public:
     	    *surfaceMapCloud += *transformPointCloud(surfCloudKeyFrames[i],     &cloudKeyPoses6D->points[i]);
     	    *surfaceMapCloud += *transformPointCloud(outlierCloudKeyFrames[i],  &cloudKeyPoses6D->points[i]);
         }
-        pcl::io::savePCDFileASCII("/home/tiejean/Documents/projects/catkin_ws/out/LeGO-LOAM/surfaceMap.pcd", *surfaceMapCloud);
-        cout << "saved to /home/tiejean/Documents/projects/catkin_ws/out/LeGO-LOAM/surfaceMap.pcd" << endl;
+        pcl::io::savePCDFileASCII("/home/arthur/AMRL/Datasets/UTPeDa/101222/LeGO-LOAM/surfaceMap.pcd", *surfaceMapCloud);
+        cout << "saved to /home/arthur/AMRL/Datasets/UTPeDa/101222/LeGO-LOAM-noimu/surfaceMap.pcd" << endl;
         downSizeFilterCorner.setInputCloud(cornerMapCloud);
         downSizeFilterCorner.filter(*cornerMapCloudDS);
         downSizeFilterSurf.setInputCloud(surfaceMapCloud);
@@ -788,7 +788,7 @@ public:
 	    // downsample visualized points
         downSizeFilterGlobalMapKeyFrames.setInputCloud(globalMapKeyFrames);
         downSizeFilterGlobalMapKeyFrames.filter(*globalMapKeyFramesDS);
-        pcl::io::savePCDFileASCII("/home/tiejean/Documents/projects/catkin_ws/out/LeGO-LOAM/globalMap.pcd", *globalMapKeyFrames);
+        pcl::io::savePCDFileASCII("/home/arthur/AMRL/Datasets/UTPeDa/101222/LeGO-LOAM/globalMap.pcd", *globalMapKeyFrames);
  
         sensor_msgs::PointCloud2 cloudMsgTemp;
         // pcl::toROSMsg(*globalMapKeyFramesDS, cloudMsgTemp);
@@ -1540,8 +1540,8 @@ int main(int argc, char** argv)
     std::thread loopthread(&mapOptimization::loopClosureThread, &MO);
     std::thread visualizeMapThread(&mapOptimization::visualizeGlobalMapThread, &MO);
 
-    std::string out_dir = "/home/tiejean/Documents/projects/catkin_ws/out/LeGO-LOAM/";
-    std::string out_path = out_dir + "test.csv";
+    std::string out_dir = "/home/arthur/AMRL/Datasets/CODa/poses/";
+    std::string out_path = out_dir + "1.txt";
     int last_est_size = -1;
 
     ros::Rate rate(200);
@@ -1550,7 +1550,7 @@ int main(int argc, char** argv)
         ros::spinOnce();
 
         MO.run();
-        #if 0
+        // #if 0
         int curr_estimate_size = MO.timestamps.size();
         if (curr_estimate_size != last_est_size) {
             std::vector<double> timestamps = MO.timestamps;
@@ -1564,13 +1564,13 @@ int main(int argc, char** argv)
             for (int i = 0; i < curr_estimate_size; i++) {
                 Pose3 pose_est = vals.at<Pose3>(i);
                 Quaternion quaternion = pose_est.rotation().toQuaternion();
-                ofile << std::fixed << std::setprecision(6) << timestamps[i] << std::setprecision(8) << ","
-                << pose_est.translation().x() << "," << pose_est.translation().y() << "," << pose_est.translation().z() << ","
-                << quaternion.w() << "," << quaternion.x() << ","<< quaternion.y() << ","<< quaternion.z() << std::endl;
+                ofile << std::fixed << std::setprecision(6) << timestamps[i] << std::setprecision(8) << " "
+                << pose_est.translation().x() << " " << pose_est.translation().y() << " " << pose_est.translation().z() << " "
+                << quaternion.w() << " " << quaternion.x() << " "<< quaternion.y() << " "<< quaternion.z() << std::endl;
             }
             ofile.close();
         }
-        #endif
+        // #endif
 
         rate.sleep();
     }

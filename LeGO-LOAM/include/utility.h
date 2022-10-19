@@ -55,14 +55,14 @@ using namespace std;
 
 typedef pcl::PointXYZI  PointType;
 
-extern const string pointCloudTopic = "/ouster/points";
-extern const string imuTopic = "/imu/data";
+extern const string pointCloudTopic = "/ouster/lidar_packets"; //"/ouster/points";
+extern const string imuTopic = "/vectornav/IMU";
 
 // Save pcd
 extern const string fileDirectory = "/tmp/";
 
 // Using velodyne cloud "ring" channel for image projection (other lidar may have different name for this channel, change "PointXYZIR" below)
-extern const bool useCloudRing = true; // if true, ang_res_y and ang_bottom are not used
+extern const bool useCloudRing = false; // if true, ang_res_y and ang_bottom are not used
 // extern const bool useCloudRing = false; // if true, ang_res_y and ang_bottom are not used
 
 // VLP-16
@@ -164,43 +164,43 @@ struct by_value{
 /*
     * A point cloud type that has "ring" channel
     */
-// struct PointXYZIR
-// {
-//     PCL_ADD_POINT4D
-//     PCL_ADD_INTENSITY;
-//     uint16_t ring;
-//     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-// } EIGEN_ALIGN16;
-
-// POINT_CLOUD_REGISTER_POINT_STRUCT (PointXYZIR,  
-//                                    (float, x, x) (float, y, y)
-//                                    (float, z, z) (float, intensity, intensity)
-//                                    (uint16_t, ring, ring)
-// )
-struct EIGEN_ALIGN16 PointXYZIR {
-    PCL_ADD_POINT4D;
-    float intensity;
-    uint32_t t;
-    uint16_t reflectivity;
-    uint8_t ring;
-    uint16_t ambient;
-    uint32_t range;
+struct EIGEN_ALIGN16 PointXYZIR
+{
+    PCL_ADD_POINT4D
+    PCL_ADD_INTENSITY;
+    uint16_t ring;
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
-// clang-format off
-POINT_CLOUD_REGISTER_POINT_STRUCT(PointXYZIR,
-    (float, x, x)
-    (float, y, y)
-    (float, z, z)
-    (float, intensity, intensity)
-    // use std::uint32_t to avoid conflicting with pcl::uint32_t
-    (std::uint32_t, t, t)
-    (std::uint16_t, reflectivity, reflectivity)
-    (std::uint8_t, ring, ring)
-    (std::uint16_t, ambient, ambient)
-    (std::uint32_t, range, range)
+POINT_CLOUD_REGISTER_POINT_STRUCT (PointXYZIR,  
+                                   (float, x, x) (float, y, y)
+                                   (float, z, z) (float, intensity, intensity)
+                                   (uint16_t, ring, ring)
 )
+// struct EIGEN_ALIGN16 PointXYZIR {
+//     PCL_ADD_POINT4D;
+//     float intensity;
+//     uint32_t t;
+//     uint16_t reflectivity;
+//     uint8_t ring;
+//     uint16_t ambient;
+//     uint32_t range;
+//     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+// };
+
+// // clang-format off
+// POINT_CLOUD_REGISTER_POINT_STRUCT(PointXYZIR,
+//     (float, x, x)
+//     (float, y, y)
+//     (float, z, z)
+//     (float, intensity, intensity)
+//     // use std::uint32_t to avoid conflicting with pcl::uint32_t
+//     (std::uint32_t, t, t)
+//     (std::uint16_t, reflectivity, reflectivity)
+//     (std::uint8_t, ring, ring)
+//     (std::uint16_t, ambient, ambient)
+//     (std::uint32_t, range, range)
+// )
 
 /*
     * A point cloud type that has 6D pose info ([x,y,z,roll,pitch,yaw] intensity is time stamp)
