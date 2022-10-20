@@ -50,6 +50,8 @@ private:
     ros::Publisher pubSegmentedCloudInfo;
     ros::Publisher pubOutlierCloud;
 
+    ros::Publisher pubRealTimestampMap;
+
     pcl::PointCloud<PointType>::Ptr laserCloudIn;
     pcl::PointCloud<PointXYZIR>::Ptr laserCloudInRing;
 
@@ -96,6 +98,8 @@ public:
         pubSegmentedCloudPure = nh.advertise<sensor_msgs::PointCloud2> ("/segmented_cloud_pure", 1);
         pubSegmentedCloudInfo = nh.advertise<cloud_msgs::cloud_info> ("/segmented_cloud_info", 1);
         pubOutlierCloud = nh.advertise<sensor_msgs::PointCloud2> ("/outlier_cloud", 1);
+
+        pubRealTimestampMap = nh.advertise<std_msgs::Float64MultiArray>("/rosts_sensts_map", 1);
 
         nanPoint.x = std::numeric_limits<float>::quiet_NaN();
         nanPoint.y = std::numeric_limits<float>::quiet_NaN();
@@ -163,8 +167,17 @@ public:
     void copyPointCloud(const sensor_msgs::PointCloud2ConstPtr& laserCloudMsg){
 
         cloudHeader = laserCloudMsg->header;
+    
         cloudHeader.stamp = ros::Time::now(); // Ouster lidar users may need to uncomment this line
+        std::vector<double> last_ts_map(2, 0);
+        last_ts_map[0] = cloudHeader.stamp.toSec();
+        last_ts_map[1] = laserCloudMsg->header.stamp.toSec();
+        std_msgs::Float64MultiArray msg;
+        msg.data = last_ts_map;
+        pubRealTimestampMap.publish(msg);
+
         pcl::fromROSMsg(*laserCloudMsg, *laserCloudIn);
+
         // Remove Nan points
         std::vector<int> indices;
         pcl::removeNaNFromPointCloud(*laserCloudIn, *laserCloudIn, indices);
