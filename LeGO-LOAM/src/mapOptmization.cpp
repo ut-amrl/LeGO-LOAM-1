@@ -763,8 +763,8 @@ public:
     	    *surfaceMapCloud += *transformPointCloud(surfCloudKeyFrames[i],     &cloudKeyPoses6D->points[i]);
     	    *surfaceMapCloud += *transformPointCloud(outlierCloudKeyFrames[i],  &cloudKeyPoses6D->points[i]);
         }
-        pcl::io::savePCDFileASCII("/home/arthur/AMRL/Datasets/UTPeDa/101222/LeGO-LOAM/surfaceMap.pcd", *surfaceMapCloud);
-        cout << "saved to /home/arthur/AMRL/Datasets/UTPeDa/101222/LeGO-LOAM/surfaceMap.pcd" << endl;
+        // pcl::io::savePCDFileASCII("/home/arthur/AMRL/Datasets/UTPeDa/101222/LeGO-LOAM/surfaceMap.pcd", *surfaceMapCloud);
+        // cout << "saved to /home/arthur/AMRL/Datasets/UTPeDa/101222/LeGO-LOAM/surfaceMap.pcd" << endl;
         downSizeFilterCorner.setInputCloud(cornerMapCloud);
         downSizeFilterCorner.filter(*cornerMapCloudDS);
         downSizeFilterSurf.setInputCloud(surfaceMapCloud);
@@ -803,7 +803,7 @@ public:
 	    // downsample visualized points
         downSizeFilterGlobalMapKeyFrames.setInputCloud(globalMapKeyFrames);
         downSizeFilterGlobalMapKeyFrames.filter(*globalMapKeyFramesDS);
-        pcl::io::savePCDFileASCII("/home/arthur/AMRL/Datasets/UTPeDa/101222/LeGO-LOAM/globalMap.pcd", *globalMapKeyFrames);
+        // pcl::io::savePCDFileASCII("/home/arthur/AMRL/Datasets/UTPeDa/101222/LeGO-LOAM/globalMap.pcd", *globalMapKeyFrames);
  
         sensor_msgs::PointCloud2 cloudMsgTemp;
         // pcl::toROSMsg(*globalMapKeyFramesDS, cloudMsgTemp);
