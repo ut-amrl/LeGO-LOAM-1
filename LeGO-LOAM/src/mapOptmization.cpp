@@ -1550,7 +1550,6 @@ int main(int argc, char** argv)
         ros::spinOnce();
 
         MO.run();
-        #if 0
         int curr_estimate_size = MO.timestamps.size();
         if (curr_estimate_size != last_est_size) {
             std::vector<double> timestamps = MO.timestamps;
@@ -1570,7 +1569,6 @@ int main(int argc, char** argv)
             }
             ofile.close();
         }
-        #endif
 
         rate.sleep();
     }
