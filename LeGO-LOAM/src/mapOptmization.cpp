@@ -32,6 +32,7 @@
 //   T. Shan and B. Englot. LeGO-LOAM: Lightweight and Ground-Optimized Lidar Odometry and Mapping on Variable Terrain
 //      IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS). October 2018.
 #include "utility.h"
+#include <map>
 
 #include <gtsam/geometry/Rot3.h>
 #include <gtsam/geometry/Pose3.h>
@@ -78,6 +79,8 @@ private:
     ros::Subscriber subOutlierCloudLast;
     ros::Subscriber subLaserOdometry;
     ros::Subscriber subImu;
+
+    ros::Subscriber subRealTimestamp;
 
     nav_msgs::Odometry odomAftMapped;
     tf::StampedTransform aftMappedTrans;
@@ -220,12 +223,13 @@ private:
 
     float cRoll, sRoll, cPitch, sPitch, cYaw, sYaw, tX, tY, tZ;
     float ctRoll, stRoll, ctPitch, stPitch, ctYaw, stYaw, tInX, tInY, tInZ;
+    float trueTime;
 
 public:
 
     std::vector<double> timestamps;
     Values isamCurrentEstimate;
-
+    std::map<double, double> rosts_sensts_map;
     mapOptimization():
         nh("~")
     {
@@ -249,6 +253,8 @@ public:
         pubIcpKeyFrames = nh.advertise<sensor_msgs::PointCloud2>("/corrected_cloud", 2);
         pubRecentKeyFrames = nh.advertise<sensor_msgs::PointCloud2>("/recent_cloud", 2);
         pubRegisteredCloud = nh.advertise<sensor_msgs::PointCloud2>("/registered_cloud", 2);
+
+        subRealTimestamp = nh.subscribe<std_msgs::Float64MultiArray>("/rosts_sensts_map", 10, &mapOptimization::tsHandler, this);
 
         downSizeFilterCorner.setLeafSize(0.2, 0.2, 0.2);
         // downSizeFilterSurf.setLeafSize(0.4, 0.4, 0.4);
@@ -610,6 +616,12 @@ public:
         return cloudOut;
     }
 
+    void tsHandler(const std_msgs::Float64MultiArrayConstPtr& msg){
+        double   ros_ts  = msg->data[0];
+        double   sens_ts = msg->data[1];
+        rosts_sensts_map.insert(std::pair<double, double>(ros_ts, sens_ts));
+    }
+
     void laserCloudOutlierLastHandler(const sensor_msgs::PointCloud2ConstPtr& msg){
         timeLaserCloudOutlierLast = msg->header.stamp.toSec();
         laserCloudOutlierLast->clear();
@@ -633,6 +645,8 @@ public:
 
     void laserOdometryHandler(const nav_msgs::Odometry::ConstPtr& laserOdometry){
         timeLaserOdometry = laserOdometry->header.stamp.toSec();
+    
+        // std::cout << std::setprecision(15) << "Received messages: " << timeLaserOdometry << '\n';
         double roll, pitch, yaw;
         geometry_msgs::Quaternion geoQuat = laserOdometry->pose.pose.orientation;
         tf::Matrix3x3(tf::Quaternion(geoQuat.z, -geoQuat.x, -geoQuat.y, geoQuat.w)).getRPY(roll, pitch, yaw);
@@ -695,7 +709,7 @@ public:
     }
 
     void publishKeyPosesAndFrames(){
-
+        // Modified to use current time for rviz visualization
         if (pubKeyPoses.getNumSubscribers() != 0){
             sensor_msgs::PointCloud2 cloudMsgTemp;
             pcl::toROSMsg(*cloudKeyPoses3D, cloudMsgTemp);
@@ -749,8 +763,8 @@ public:
     	    *surfaceMapCloud += *transformPointCloud(surfCloudKeyFrames[i],     &cloudKeyPoses6D->points[i]);
     	    *surfaceMapCloud += *transformPointCloud(outlierCloudKeyFrames[i],  &cloudKeyPoses6D->points[i]);
         }
-        pcl::io::savePCDFileASCII("/home/tiejean/Documents/projects/catkin_ws/out/LeGO-LOAM/surfaceMap.pcd", *surfaceMapCloud);
-        cout << "saved to /home/tiejean/Documents/projects/catkin_ws/out/LeGO-LOAM/surfaceMap.pcd" << endl;
+        pcl::io::savePCDFileASCII("/home/arthur/AMRL/Datasets/UTPeDa/101222/LeGO-LOAM/surfaceMap.pcd", *surfaceMapCloud);
+        cout << "saved to /home/arthur/AMRL/Datasets/UTPeDa/101222/LeGO-LOAM/surfaceMap.pcd" << endl;
         downSizeFilterCorner.setInputCloud(cornerMapCloud);
         downSizeFilterCorner.filter(*cornerMapCloudDS);
         downSizeFilterSurf.setInputCloud(surfaceMapCloud);
@@ -762,6 +776,7 @@ public:
     }
 
     void publishGlobalMap(){
+        cout << "publishGlobalMap" << endl;
         if (cloudKeyPoses3D->points.empty() == true)
             return;
 	    // kd-tree to find near key frames to visualize
@@ -788,7 +803,7 @@ public:
 	    // downsample visualized points
         downSizeFilterGlobalMapKeyFrames.setInputCloud(globalMapKeyFrames);
         downSizeFilterGlobalMapKeyFrames.filter(*globalMapKeyFramesDS);
-        pcl::io::savePCDFileASCII("/home/tiejean/Documents/projects/catkin_ws/out/LeGO-LOAM/globalMap.pcd", *globalMapKeyFrames);
+        pcl::io::savePCDFileASCII("/home/arthur/AMRL/Datasets/UTPeDa/101222/LeGO-LOAM/globalMap.pcd", *globalMapKeyFrames);
  
         sensor_msgs::PointCloud2 cloudMsgTemp;
         // pcl::toROSMsg(*globalMapKeyFramesDS, cloudMsgTemp);
@@ -1395,6 +1410,8 @@ public:
                                                                      		   Point3(transformAftMapped[5], transformAftMapped[3], transformAftMapped[4])));
         }
         timestamps.emplace_back(timeLaserOdometry);
+        // std::cout << std::setprecision(15) << "Received messages: " << timeLaserOdometry << '\n';
+
         /**
          * update iSAM
          */
@@ -1491,13 +1508,15 @@ public:
     }
 
     void run(){
-
+        // static uint32_t num_runs = 0;
+        
         if (newLaserCloudCornerLast  && std::abs(timeLaserCloudCornerLast  - timeLaserOdometry) < 0.005 &&
             newLaserCloudSurfLast    && std::abs(timeLaserCloudSurfLast    - timeLaserOdometry) < 0.005 &&
             newLaserCloudOutlierLast && std::abs(timeLaserCloudOutlierLast - timeLaserOdometry) < 0.005 &&
             newLaserOdometry)
         {
-
+            // num_runs +=1;
+            // std::cout<< "number of runs: " << num_runs << '\n';
             newLaserCloudCornerLast = false; newLaserCloudSurfLast = false; newLaserCloudOutlierLast = false; newLaserOdometry = false;
 
             std::lock_guard<std::mutex> lock(mtx);
@@ -1540,8 +1559,8 @@ int main(int argc, char** argv)
     std::thread loopthread(&mapOptimization::loopClosureThread, &MO);
     std::thread visualizeMapThread(&mapOptimization::visualizeGlobalMapThread, &MO);
 
-    std::string out_dir = "/home/tiejean/Documents/projects/catkin_ws/out/LeGO-LOAM/";
-    std::string out_path = out_dir + "test.csv";
+    std::string out_dir = "/home/tiejean/Documents/mnt/perception/sync/poses/";
+    std::string out_path = out_dir + "test.txt";
     int last_est_size = -1;
 
     ros::Rate rate(200);
@@ -1563,9 +1582,15 @@ int main(int argc, char** argv)
             for (int i = 0; i < curr_estimate_size; i++) {
                 Pose3 pose_est = vals.at<Pose3>(i);
                 Quaternion quaternion = pose_est.rotation().toQuaternion();
-                ofile << std::fixed << std::setprecision(6) << timestamps[i] << std::setprecision(8) << ","
-                << pose_est.translation().x() << "," << pose_est.translation().y() << "," << pose_est.translation().z() << ","
-                << quaternion.w() << "," << quaternion.x() << ","<< quaternion.y() << ","<< quaternion.z() << std::endl;
+                auto sens_ts_it = MO.rosts_sensts_map.find(timestamps[i]);
+                if (sens_ts_it==MO.rosts_sensts_map.end()) {
+                    std::cout << "Warning: Timestamp map not received for ts " << timestamps[i] << '\n';
+                } else {
+                    double ts = MO.rosts_sensts_map[timestamps[i]];
+                    ofile << std::fixed << std::setprecision(6) << ts << std::setprecision(8) << " "
+                    << pose_est.translation().x() << " " << pose_est.translation().y() << " " << pose_est.translation().z() << " "
+                    << quaternion.w() << " " << quaternion.x() << " "<< quaternion.y() << " "<< quaternion.z() << std::endl;
+                }
             }
             ofile.close();
         }
