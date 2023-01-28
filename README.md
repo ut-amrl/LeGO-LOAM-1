@@ -8,6 +8,14 @@ This repository contains code for a lightweight and ground optimized lidar odome
     <img src="/LeGO-LOAM/launch/demo.gif" alt="drawing" width="800"/>
 </p>
 
+# AMRL Modifications
+## Running on Ubuntu 20.04
+1. if you have opencv4, in utility.h, changed `#include <opencv/cv.h>` to `#include <opencv2/opencv.hpp>`
+1. in cmakefile, change `-std=c++11` to a higher version (e.g. c++17) for pcl-1.10+
+1. if you're using LeGO-LOAM's recommended gtsam version (4.0.0-alpha2), build gtsam with `cmake -DGTSAM_BUILD_WITH_MARCH_NATIVE=OFF -DGTSAM_USE_SYSTEM_EIGEN=ON ..`
+1. run `sudo ldconfig` if there's any gtsam ld error
+1. if you got error messages like "ld: cannot find -lBoost::xxx", in LeGO-LOAM's cmakefile, add `find_package(Boost 1.43 COMPONENTS serialization system filesystem thread program_options date_time timer chrono)`
+
 ## Lidar-inertial Odometry
 
 An updated lidar-initial odometry package, [LIO-SAM](https://github.com/TixiaoShan/LIO-SAM), has been open-sourced and available for testing.
