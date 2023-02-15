@@ -62,6 +62,7 @@ private:
     noiseModel::Diagonal::shared_ptr constraintNoise;
 
     ros::NodeHandle nh;
+    std::string point_cloud_out_dir_;
 
     ros::Publisher pubMap;
 
@@ -99,14 +100,14 @@ private:
     deque<pcl::PointCloud<PointType>::Ptr> surroundingCornerCloudKeyFrames;
     deque<pcl::PointCloud<PointType>::Ptr> surroundingSurfCloudKeyFrames;
     deque<pcl::PointCloud<PointType>::Ptr> surroundingOutlierCloudKeyFrames;
-    
+
     PointType previousRobotPosPoint;
     PointType currentRobotPosPoint;
 
     pcl::PointCloud<PointType>::Ptr cloudKeyPoses3D;
     pcl::PointCloud<PointTypePose>::Ptr cloudKeyPoses6D;
 
-    
+
 
     pcl::PointCloud<PointType>::Ptr surroundingKeyPoses;
     pcl::PointCloud<PointType>::Ptr surroundingKeyPosesDS;
@@ -136,7 +137,7 @@ private:
     pcl::KdTreeFLANN<PointType>::Ptr kdtreeSurroundingKeyPoses;
     pcl::KdTreeFLANN<PointType>::Ptr kdtreeHistoryKeyPoses;
 
-    
+
     pcl::PointCloud<PointType>::Ptr nearHistoryCornerKeyFrameCloud;
     pcl::PointCloud<PointType>::Ptr nearHistoryCornerKeyFrameCloudDS;
     pcl::PointCloud<PointType>::Ptr nearHistorySurfKeyFrameCloud;
@@ -230,8 +231,8 @@ public:
     std::vector<double> timestamps;
     Values isamCurrentEstimate;
     std::map<double, double> rosts_sensts_map;
-    mapOptimization():
-        nh("~")
+    mapOptimization(const std::string &point_cloud_out_dir):
+        nh("~"), point_cloud_out_dir_(point_cloud_out_dir)
     {
     	ISAM2Params parameters;
 		parameters.relinearizeThreshold = 0.01;
@@ -285,7 +286,7 @@ public:
         kdtreeHistoryKeyPoses.reset(new pcl::KdTreeFLANN<PointType>());
 
         surroundingKeyPoses.reset(new pcl::PointCloud<PointType>());
-        surroundingKeyPosesDS.reset(new pcl::PointCloud<PointType>());        
+        surroundingKeyPosesDS.reset(new pcl::PointCloud<PointType>());
 
         laserCloudCornerLast.reset(new pcl::PointCloud<PointType>()); // corner feature set from odoOptimization
         laserCloudSurfLast.reset(new pcl::PointCloud<PointType>()); // surf feature set from odoOptimization
@@ -307,7 +308,7 @@ public:
         kdtreeCornerFromMap.reset(new pcl::KdTreeFLANN<PointType>());
         kdtreeSurfFromMap.reset(new pcl::KdTreeFLANN<PointType>());
 
-        
+
         nearHistoryCornerKeyFrameCloud.reset(new pcl::PointCloud<PointType>());
         nearHistoryCornerKeyFrameCloudDS.reset(new pcl::PointCloud<PointType>());
         nearHistorySurfKeyFrameCloud.reset(new pcl::PointCloud<PointType>());
@@ -386,10 +387,10 @@ public:
 
     void transformAssociateToMap()
     {
-        float x1 = cos(transformSum[1]) * (transformBefMapped[3] - transformSum[3]) 
+        float x1 = cos(transformSum[1]) * (transformBefMapped[3] - transformSum[3])
                  - sin(transformSum[1]) * (transformBefMapped[5] - transformSum[5]);
         float y1 = transformBefMapped[4] - transformSum[4];
-        float z1 = sin(transformSum[1]) * (transformBefMapped[3] - transformSum[3]) 
+        float z1 = sin(transformSum[1]) * (transformBefMapped[3] - transformSum[3])
                  + cos(transformSum[1]) * (transformBefMapped[5] - transformSum[5]);
 
         float x2 = x1;
@@ -424,7 +425,7 @@ public:
         float srx = -sbcx*(salx*sblx + calx*cblx*salz*sblz + calx*calz*cblx*cblz)
                   - cbcx*sbcy*(calx*calz*(cbly*sblz - cblz*sblx*sbly)
                   - calx*salz*(cbly*cblz + sblx*sbly*sblz) + cblx*salx*sbly)
-                  - cbcx*cbcy*(calx*salz*(cblz*sbly - cbly*sblx*sblz) 
+                  - cbcx*cbcy*(calx*salz*(cblz*sbly - cbly*sblx*sblz)
                   - calx*calz*(sbly*sblz + cbly*cblz*sblx) + cblx*cbly*salx);
         transformTobeMapped[0] = -asin(srx);
 
@@ -440,9 +441,9 @@ public:
                      + (calz*saly - caly*salx*salz)*(cblz*sbly - cbly*sblx*sblz) + calx*caly*cblx*cbly)
                      - cbcx*sbcy*((saly*salz + caly*calz*salx)*(cbly*sblz - cblz*sblx*sbly)
                      + (calz*saly - caly*salx*salz)*(cbly*cblz + sblx*sbly*sblz) - calx*caly*cblx*sbly);
-        transformTobeMapped[1] = atan2(srycrx / cos(transformTobeMapped[0]), 
+        transformTobeMapped[1] = atan2(srycrx / cos(transformTobeMapped[0]),
                                        crycrx / cos(transformTobeMapped[0]));
-        
+
         float srzcrx = (cbcz*sbcy - cbcy*sbcx*sbcz)*(calx*salz*(cblz*sbly - cbly*sblx*sblz)
                      - calx*calz*(sbly*sblz + cbly*cblz*sblx) + cblx*cbly*salx)
                      - (cbcy*cbcz + sbcx*sbcy*sbcz)*(calx*calz*(cbly*sblz - cblz*sblx*sbly)
@@ -453,7 +454,7 @@ public:
                      - (sbcy*sbcz + cbcy*cbcz*sbcx)*(calx*salz*(cblz*sbly - cbly*sblx*sblz)
                      - calx*calz*(sbly*sblz + cbly*cblz*sblx) + cblx*cbly*salx)
                      + cbcx*cbcz*(salx*sblx + calx*cblx*salz*sblz + calx*calz*cblx*cblz);
-        transformTobeMapped[2] = atan2(srzcrx / cos(transformTobeMapped[0]), 
+        transformTobeMapped[2] = atan2(srzcrx / cos(transformTobeMapped[0]),
                                        crzcrx / cos(transformTobeMapped[0]));
 
         x1 = cos(transformTobeMapped[2]) * transformIncre[3] - sin(transformTobeMapped[2]) * transformIncre[4];
@@ -464,10 +465,10 @@ public:
         y2 = cos(transformTobeMapped[0]) * y1 - sin(transformTobeMapped[0]) * z1;
         z2 = sin(transformTobeMapped[0]) * y1 + cos(transformTobeMapped[0]) * z1;
 
-        transformTobeMapped[3] = transformAftMapped[3] 
+        transformTobeMapped[3] = transformAftMapped[3]
                                - (cos(transformTobeMapped[1]) * x2 + sin(transformTobeMapped[1]) * z2);
         transformTobeMapped[4] = transformAftMapped[4] - y2;
-        transformTobeMapped[5] = transformAftMapped[5] 
+        transformTobeMapped[5] = transformAftMapped[5]
                                - (-sin(transformTobeMapped[1]) * x2 + cos(transformTobeMapped[1]) * z2);
     }
 
@@ -487,9 +488,9 @@ public:
 		        imuPitchLast = imuPitch[imuPointerFront];
 		    } else {
 		        int imuPointerBack = (imuPointerFront + imuQueLength - 1) % imuQueLength;
-		        float ratioFront = (timeLaserOdometry + scanPeriod - imuTime[imuPointerBack]) 
+		        float ratioFront = (timeLaserOdometry + scanPeriod - imuTime[imuPointerBack])
 		                         / (imuTime[imuPointerFront] - imuTime[imuPointerBack]);
-		        float ratioBack = (imuTime[imuPointerFront] - timeLaserOdometry - scanPeriod) 
+		        float ratioBack = (imuTime[imuPointerFront] - timeLaserOdometry - scanPeriod)
 		                        / (imuTime[imuPointerFront] - imuTime[imuPointerBack]);
 
 		        imuRollLast = imuRoll[imuPointerFront] * ratioFront + imuRoll[imuPointerBack] * ratioBack;
@@ -594,7 +595,7 @@ public:
 
         int cloudSize = cloudIn->points.size();
         cloudOut->resize(cloudSize);
-        
+
         for (int i = 0; i < cloudSize; ++i){
 
             pointFrom = &cloudIn->points[i];
@@ -645,7 +646,7 @@ public:
 
     void laserOdometryHandler(const nav_msgs::Odometry::ConstPtr& laserOdometry){
         timeLaserOdometry = laserOdometry->header.stamp.toSec();
-    
+
         // std::cout << std::setprecision(15) << "Received messages: " << timeLaserOdometry << '\n';
         double roll, pitch, yaw;
         geometry_msgs::Quaternion geoQuat = laserOdometry->pose.pose.orientation;
@@ -731,13 +732,13 @@ public:
             PointTypePose thisPose6D = trans2PointTypePose(transformTobeMapped);
             *cloudOut += *transformPointCloud(laserCloudCornerLastDS,  &thisPose6D);
             *cloudOut += *transformPointCloud(laserCloudSurfTotalLast, &thisPose6D);
-            
+
             sensor_msgs::PointCloud2 cloudMsgTemp;
             pcl::toROSMsg(*cloudOut, cloudMsgTemp);
             cloudMsgTemp.header.stamp = ros::Time().fromSec(timeLaserOdometry);
             cloudMsgTemp.header.frame_id = "camera_init";
             pubRegisteredCloud.publish(cloudMsgTemp);
-        } 
+        }
     }
 
     void visualizeGlobalMapThread(){
@@ -757,14 +758,17 @@ public:
         pcl::PointCloud<PointType>::Ptr cornerMapCloudDS(new pcl::PointCloud<PointType>());
         pcl::PointCloud<PointType>::Ptr surfaceMapCloud(new pcl::PointCloud<PointType>());
         pcl::PointCloud<PointType>::Ptr surfaceMapCloudDS(new pcl::PointCloud<PointType>());
-        
+
         for(int i = 0; i < cornerCloudKeyFrames.size(); i++) {
             *cornerMapCloud  += *transformPointCloud(cornerCloudKeyFrames[i],   &cloudKeyPoses6D->points[i]);
     	    *surfaceMapCloud += *transformPointCloud(surfCloudKeyFrames[i],     &cloudKeyPoses6D->points[i]);
     	    *surfaceMapCloud += *transformPointCloud(outlierCloudKeyFrames[i],  &cloudKeyPoses6D->points[i]);
         }
-        pcl::io::savePCDFileASCII("/home/arthur/AMRL/Datasets/UTPeDa/101222/LeGO-LOAM/surfaceMap.pcd", *surfaceMapCloud);
-        cout << "saved to /home/arthur/AMRL/Datasets/UTPeDa/101222/LeGO-LOAM/surfaceMap.pcd" << endl;
+
+//        pcl::io::savePCDFileASCII("/home/arthur/AMRL/Datasets/UTPeDa/101222/LeGO-LOAM/surfaceMap.pcd", *surfaceMapCloud);
+        pcl::io::savePCDFileASCII(point_cloud_out_dir_ + "surfaceMap.pcd", *surfaceMapCloud);
+//        cout << "saved to /home/arthur/AMRL/Datasets/UTPeDa/101222/LeGO-LOAM/surfaceMap.pcd" << endl;
+        cout << "saved to " + point_cloud_out_dir_ + "surfaceMap.pcd" << endl;
         downSizeFilterCorner.setInputCloud(cornerMapCloud);
         downSizeFilterCorner.filter(*cornerMapCloudDS);
         downSizeFilterSurf.setInputCloud(surfaceMapCloud);
@@ -802,14 +806,15 @@ public:
 	    // downsample visualized points
         downSizeFilterGlobalMapKeyFrames.setInputCloud(globalMapKeyFrames);
         downSizeFilterGlobalMapKeyFrames.filter(*globalMapKeyFramesDS);
-        pcl::io::savePCDFileASCII("/home/arthur/AMRL/Datasets/UTPeDa/101222/LeGO-LOAM/globalMap.pcd", *globalMapKeyFrames);
- 
+//        pcl::io::savePCDFileASCII("/home/arthur/AMRL/Datasets/UTPeDa/101222/LeGO-LOAM/globalMap.pcd", *globalMapKeyFrames);
+        pcl::io::savePCDFileASCII(point_cloud_out_dir_ + "globalMap.pcd", *globalMapKeyFrames);
+
         sensor_msgs::PointCloud2 cloudMsgTemp;
         // pcl::toROSMsg(*globalMapKeyFramesDS, cloudMsgTemp);
         pcl::toROSMsg(*globalMapKeyFrames, cloudMsgTemp);
         cloudMsgTemp.header.stamp = ros::Time().fromSec(timeLaserOdometry);
         cloudMsgTemp.header.frame_id = "camera_init";
-        pubLaserCloudSurround.publish(cloudMsgTemp);  
+        pubLaserCloudSurround.publish(cloudMsgTemp);
         // cout << "pubLaserCloudSurround" << endl;
 
         globalMapKeyPoses->clear();
@@ -842,7 +847,7 @@ public:
         std::vector<float> pointSearchSqDisLoop;
         kdtreeHistoryKeyPoses->setInputCloud(cloudKeyPoses3D);
         kdtreeHistoryKeyPoses->radiusSearch(currentRobotPosPoint, historyKeyframeSearchRadius, pointSearchIndLoop, pointSearchSqDisLoop, 0);
-        
+
         closestHistoryFrameID = -1;
         for (int i = 0; i < pointSearchIndLoop.size(); ++i){
             int id = pointSearchIndLoop[i];
@@ -931,7 +936,7 @@ public:
             cloudMsgTemp.header.stamp = ros::Time().fromSec(timeLaserOdometry);
             cloudMsgTemp.header.frame_id = "camera_init";
             pubIcpKeyFrames.publish(cloudMsgTemp);
-        }   
+        }
         /*
         	get pose constraint
         	*/
@@ -975,8 +980,8 @@ public:
     void extractSurroundingKeyFrames(){
 
         if (cloudKeyPoses3D->points.empty() == true)
-            return;	
-		
+            return;
+
     	if (loopClosureEnableFlag == true){
     	    // only use recent key poses for graph building
                 if (recentCornerCloudKeyFrames.size() < surroundingKeyframeSearchNum){ // queue is not full (the beginning of mapping or a loop is just closed)
@@ -1116,7 +1121,7 @@ public:
             pointOri = laserCloudCornerLastDS->points[i];
             pointAssociateToMap(&pointOri, &pointSel);
             kdtreeCornerFromMap->nearestKSearch(pointSel, 5, pointSearchInd, pointSearchSqDis);
-            
+
             if (pointSearchSqDis[4] < 1.0) {
                 float cx = 0, cy = 0, cz = 0;
                 for (int j = 0; j < 5; j++) {
@@ -1157,21 +1162,21 @@ public:
                     float z2 = cz - 0.1 * matV1.at<float>(0, 2);
 
                     float a012 = sqrt(((x0 - x1)*(y0 - y2) - (x0 - x2)*(y0 - y1))
-                                    * ((x0 - x1)*(y0 - y2) - (x0 - x2)*(y0 - y1)) 
+                                    * ((x0 - x1)*(y0 - y2) - (x0 - x2)*(y0 - y1))
                                     + ((x0 - x1)*(z0 - z2) - (x0 - x2)*(z0 - z1))
-                                    * ((x0 - x1)*(z0 - z2) - (x0 - x2)*(z0 - z1)) 
+                                    * ((x0 - x1)*(z0 - z2) - (x0 - x2)*(z0 - z1))
                                     + ((y0 - y1)*(z0 - z2) - (y0 - y2)*(z0 - z1))
                                     * ((y0 - y1)*(z0 - z2) - (y0 - y2)*(z0 - z1)));
 
                     float l12 = sqrt((x1 - x2)*(x1 - x2) + (y1 - y2)*(y1 - y2) + (z1 - z2)*(z1 - z2));
 
-                    float la = ((y1 - y2)*((x0 - x1)*(y0 - y2) - (x0 - x2)*(y0 - y1)) 
+                    float la = ((y1 - y2)*((x0 - x1)*(y0 - y2) - (x0 - x2)*(y0 - y1))
                               + (z1 - z2)*((x0 - x1)*(z0 - z2) - (x0 - x2)*(z0 - z1))) / a012 / l12;
 
-                    float lb = -((x1 - x2)*((x0 - x1)*(y0 - y2) - (x0 - x2)*(y0 - y1)) 
+                    float lb = -((x1 - x2)*((x0 - x1)*(y0 - y2) - (x0 - x2)*(y0 - y1))
                                - (z1 - z2)*((y0 - y1)*(z0 - z2) - (y0 - y2)*(z0 - z1))) / a012 / l12;
 
-                    float lc = -((x1 - x2)*((x0 - x1)*(z0 - z2) - (x0 - x2)*(z0 - z1)) 
+                    float lc = -((x1 - x2)*((x0 - x1)*(z0 - z2) - (x0 - x2)*(z0 - z1))
                                + (y1 - y2)*((y0 - y1)*(z0 - z2) - (y0 - y2)*(z0 - z1))) / a012 / l12;
 
                     float ld2 = a012 / l12;
@@ -1196,7 +1201,7 @@ public:
         updatePointAssociateToMapSinCos();
         for (int i = 0; i < laserCloudSurfTotalLastDSNum; i++) {
             pointOri = laserCloudSurfTotalLastDS->points[i];
-            pointAssociateToMap(&pointOri, &pointSel); 
+            pointAssociateToMap(&pointOri, &pointSel);
             kdtreeSurfFromMap->nearestKSearch(pointSel, 5, pointSearchInd, pointSearchSqDis);
 
             if (pointSearchSqDis[4] < 1.0) {
@@ -1272,9 +1277,9 @@ public:
                       + (-srx*srz*pointOri.x - crz*srx*pointOri.y - crx*pointOri.z) * coeff.y
                       + (crx*cry*srz*pointOri.x + crx*cry*crz*pointOri.y - cry*srx*pointOri.z) * coeff.z;
 
-            float ary = ((cry*srx*srz - crz*sry)*pointOri.x 
+            float ary = ((cry*srx*srz - crz*sry)*pointOri.x
                       + (sry*srz + cry*crz*srx)*pointOri.y + crx*cry*pointOri.z) * coeff.x
-                      + ((-cry*crz - srx*sry*srz)*pointOri.x 
+                      + ((-cry*crz - srx*sry*srz)*pointOri.x
                       + (cry*srz - crz*srx*sry)*pointOri.y - crx*sry*pointOri.z) * coeff.z;
 
             float arz = ((crz*srx*sry - cry*srz)*pointOri.x + (-cry*crz-srx*sry*srz)*pointOri.y)*coeff.x
@@ -1361,7 +1366,7 @@ public:
                 surfOptimization(iterCount);
 
                 if (LMOptimization(iterCount) == true)
-                    break;              
+                    break;
             }
 
             transformUpdate();
@@ -1376,13 +1381,15 @@ public:
         currentRobotPosPoint.z = transformAftMapped[5];
 
         bool saveThisKeyFrame = true;
+//        double minTranslForKeyframe = 0.3;
+        double minTranslForKeyframe = 0.1;
         if (sqrt((previousRobotPosPoint.x-currentRobotPosPoint.x)*(previousRobotPosPoint.x-currentRobotPosPoint.x)
                 +(previousRobotPosPoint.y-currentRobotPosPoint.y)*(previousRobotPosPoint.y-currentRobotPosPoint.y)
-                +(previousRobotPosPoint.z-currentRobotPosPoint.z)*(previousRobotPosPoint.z-currentRobotPosPoint.z)) < 0.3){
+                +(previousRobotPosPoint.z-currentRobotPosPoint.z)*(previousRobotPosPoint.z-currentRobotPosPoint.z)) < minTranslForKeyframe){
             saveThisKeyFrame = false;
         }
 
-        
+
 
         if (saveThisKeyFrame == false && !cloudKeyPoses3D->points.empty())
         	return;
@@ -1416,7 +1423,7 @@ public:
          */
         isam->update(gtSAMgraph, initialEstimate);
         isam->update();
-        
+
         gtSAMgraph.resize(0);
         initialEstimate.clear();
 
@@ -1501,19 +1508,20 @@ public:
 
     void clearCloud(){
         laserCloudCornerFromMap->clear();
-        laserCloudSurfFromMap->clear();  
+        laserCloudSurfFromMap->clear();
         laserCloudCornerFromMapDS->clear();
-        laserCloudSurfFromMapDS->clear();   
+        laserCloudSurfFromMapDS->clear();
     }
 
     void run(){
         // static uint32_t num_runs = 0;
-        
+
         if (newLaserCloudCornerLast  && std::abs(timeLaserCloudCornerLast  - timeLaserOdometry) < 0.005 &&
             newLaserCloudSurfLast    && std::abs(timeLaserCloudSurfLast    - timeLaserOdometry) < 0.005 &&
             newLaserCloudOutlierLast && std::abs(timeLaserCloudOutlierLast - timeLaserOdometry) < 0.005 &&
             newLaserOdometry)
         {
+            ROS_INFO_ONCE("Running");
             // num_runs +=1;
             // std::cout<< "number of runs: " << num_runs << '\n';
             newLaserCloudCornerLast = false; newLaserCloudSurfLast = false; newLaserCloudOutlierLast = false; newLaserOdometry = false;
@@ -1553,13 +1561,28 @@ int main(int argc, char** argv)
 
     ROS_INFO("\033[1;32m---->\033[0m Map Optimization Started.");
 
-    mapOptimization MO;
+    std::string out_root_dir;
+    std::string results_dir_param_name ="lego_loam_results_dir";
+    ros::NodeHandle nh;
+    nh.getParam(results_dir_param_name, out_root_dir);
+
+    std::stringstream stringstream1;
+    stringstream1 << out_root_dir.back();
+    std::string lastChar = stringstream1.str();
+    if (lastChar != "/") {
+        out_root_dir = out_root_dir + "/";
+    }
+
+    std::string poses_out_dir = out_root_dir + "poses/";
+    std::string point_cloud_out_dir = out_root_dir + "point_clouds/";
+
+
+    mapOptimization MO(point_cloud_out_dir);
 
     std::thread loopthread(&mapOptimization::loopClosureThread, &MO);
     std::thread visualizeMapThread(&mapOptimization::visualizeGlobalMapThread, &MO);
 
-    std::string out_dir = "/home/arthur/AMRL/Datasets/CODa/poses/";
-    std::string out_path = out_dir + "1.txt";
+    std::string poses_out_path = poses_out_dir + "lego_loam_poses.csv";
     int last_est_size = -1;
 
     ros::Rate rate(200);
@@ -1574,9 +1597,9 @@ int main(int argc, char** argv)
             std::vector<double> timestamps = MO.timestamps;
             Values vals = MO.isamCurrentEstimate;
             std::ofstream ofile;
-            ofile.open(out_path, std::ofstream::trunc);
+            ofile.open(poses_out_path, std::ofstream::trunc);
             if (!ofile.is_open()) {
-                std::cerr << "failed to open file: " << out_path << std::endl;
+                std::cerr << "failed to open file: " << poses_out_path << std::endl;
                 exit(1);
             }
             for (int i = 0; i < curr_estimate_size; i++) {
