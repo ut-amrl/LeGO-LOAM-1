@@ -56,8 +56,8 @@ using namespace std;
 
 typedef pcl::PointXYZI  PointType;
 
-extern const string pointCloudTopic = "/ouster/lidar_packets"; //"/ouster/points";
-extern const string imuTopic = "/vectornav/IMU";
+extern const string pointCloudTopic = "/velodyne_points";
+extern const string imuTopic = "/imu/data";
 
 // Save pcd
 extern const string fileDirectory = "/tmp/";
@@ -67,12 +67,12 @@ extern const bool useCloudRing = false; // if true, ang_res_y and ang_bottom are
 // extern const bool useCloudRing = false; // if true, ang_res_y and ang_bottom are not used
 
 // VLP-16
-// extern const int N_SCAN = 16;
-// extern const int Horizon_SCAN = 1800;
-// extern const float ang_res_x = 0.2;
-// extern const float ang_res_y = 2.0;
-// extern const float ang_bottom = 15.0+0.1;
-// extern const int groundScanInd = 7;
+extern const int N_SCAN = 16;
+extern const int Horizon_SCAN = 1800;
+extern const float ang_res_x = 0.2;
+extern const float ang_res_y = 2.0;
+extern const float ang_bottom = 15.0+0.1;
+extern const int groundScanInd = 7;
 
 // HDL-32E
 // extern const int N_SCAN = 32;
@@ -109,12 +109,12 @@ extern const bool useCloudRing = false; // if true, ang_res_y and ang_bottom are
 // extern const int groundScanInd = 15;
 
 // Ouster OS1-128
-extern const int N_SCAN = 128;
-extern const int Horizon_SCAN = 1024;
-extern const float ang_res_x = 360.0/float(Horizon_SCAN);
-extern const float ang_res_y = 45/float(N_SCAN-1);
-extern const float ang_bottom = 22.5;
-extern const int groundScanInd = 15;
+//extern const int N_SCAN = 128;
+//extern const int Horizon_SCAN = 1024;
+//extern const float ang_res_x = 360.0/float(Horizon_SCAN);
+//extern const float ang_res_y = 45/float(N_SCAN-1);
+//extern const float ang_bottom = 22.5;
+//extern const int groundScanInd = 15;
 
 extern const bool loopClosureEnableFlag = false;
 extern const double mappingProcessInterval = 0.1;

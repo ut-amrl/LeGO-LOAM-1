@@ -14,22 +14,28 @@
     <node pkg="tf" type="static_transform_publisher" name="camera_init_to_map"  args="0 0 0 1.570795   0        1.570795 map    camera_init 10" />
     <node pkg="tf" type="static_transform_publisher" name="base_link_to_camera" args="0 0 0 -1.570795 -1.570795 0        camera base_link   10" />
 
-    <!--- LeGO-LOAM -->    
-    <node pkg="lego_loam" type="imageProjection"    name="imageProjection"    output="screen">
-        <remap from="/ouster/lidar_packets" to="/coda/ouster/lidar_packets"/>
-<!--        <remap from="/vectornav/IMU" to="/coda/vectornav/IMU"/>-->
-    </node>
-    <node pkg="lego_loam" type="featureAssociation" name="featureAssociation" output="screen">
-        <remap from="/ouster/lidar_packets" to="/coda/ouster/lidar_packets"/>
-<!--        <remap from="/vectornav/IMU" to="/coda/vectornav/IMU"/>-->
-    </node>
-    <node pkg="lego_loam" type="mapOptmization"     name="mapOptmization"     output="screen">
-        <remap from="/ouster/lidar_packets" to="/coda/ouster/lidar_packets"/>
-<!--        <remap from="/vectornav/IMU" to="/coda/vectornav/IMU"/>-->
-    </node>
-    <node pkg="lego_loam" type="transformFusion"    name="transformFusion"    output="screen">
-        <remap from="/ouster/lidar_packets" to="/coda/ouster/lidar_packets"/>
-<!--        <remap from="/vectornav/IMU" to="/coda/vectornav/IMU"/>-->
-    </node>
+    <!--- LeGO-LOAM -->
+    <node pkg="lego_loam" type="imageProjection"    name="imageProjection"    output="screen"/>
+    <node pkg="lego_loam" type="featureAssociation" name="featureAssociation" output="screen"/>
+    <node pkg="lego_loam" type="mapOptmization"     name="mapOptmization"     output="screen"/>
+    <node pkg="lego_loam" type="transformFusion"    name="transformFusion"    output="screen"/>
+
+<!--    <node pkg="lego_loam" type="imageProjection"    name="imageProjection"    output="screen">-->
+<!--        <remap from="/ouster/lidar_packets" to="/coda/ouster/lidar_packets"/>-->
+<!--&lt;!&ndash;        <remap from="/vectornav/IMU" to="/coda/vectornav/IMU"/>&ndash;&gt;-->
+<!--    </node>-->
+<!--    <node pkg="lego_loam" type="featureAssociation" name="featureAssociation" output="screen">-->
+<!--        <remap from="/ouster/lidar_packets" to="/coda/ouster/lidar_packets"/>-->
+<!--&lt;!&ndash;        <remap from="/vectornav/IMU" to="/coda/vectornav/IMU"/>&ndash;&gt;-->
+<!--    </node>-->
+<!--    <node pkg="lego_loam" type="mapOptmization"     name="mapOptmization"     output="screen">-->
+<!--        <remap from="/ouster/lidar_packets" to="/coda/ouster/lidar_packets"/>-->
+<!--&lt;!&ndash;        <remap from="/vectornav/IMU" to="/coda/vectornav/IMU"/>&ndash;&gt;-->
+<!--    </node>-->
+<!--    <node pkg="lego_loam" type="transformFusion"    name="transformFusion"    output="screen">-->
+<!--        <remap from="/ouster/lidar_packets" to="/coda/ouster/lidar_packets"/>-->
+<!--&lt;!&ndash;        <remap from="/vectornav/IMU" to="/coda/vectornav/IMU"/>&ndash;&gt;-->
+<!--    </node>-->
+
 
 </launch>
