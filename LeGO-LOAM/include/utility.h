@@ -56,8 +56,8 @@ using namespace std;
 
 typedef pcl::PointXYZI  PointType;
 
-extern const string pointCloudTopic = "/ouster/lidar_packets"; //"/ouster/points";
-extern const string imuTopic = "/vectornav/IMU";
+extern const string pointCloudTopic = "/coda/ouster/lidar_packets"; //"/ouster/points";
+extern const string imuTopic = "/coda/vectornav/IMU";
 
 // Save pcd
 extern const string fileDirectory = "/tmp/";
@@ -112,11 +112,11 @@ extern const bool useCloudRing = false; // if true, ang_res_y and ang_bottom are
 extern const int N_SCAN = 128;
 extern const int Horizon_SCAN = 1024;
 extern const float ang_res_x = 360.0/float(Horizon_SCAN);
-extern const float ang_res_y = 45/float(N_SCAN-1);
+extern const float ang_res_y = 45.0/float(N_SCAN-1);
 extern const float ang_bottom = 22.5;
 extern const int groundScanInd = 15;
 
-extern const bool loopClosureEnableFlag = false;
+extern const bool loopClosureEnableFlag = true;
 extern const double mappingProcessInterval = 0.1;
 
 extern const float scanPeriod = 0.1;
@@ -125,7 +125,7 @@ extern const int imuQueLength = 200;
 
 extern const float sensorMinimumRange = 1.0;
 extern const float sensorMountAngle = 0.0;
-extern const float segmentTheta = 60.0/180.0*M_PI; // decrese this value may improve accuracy
+extern const float segmentTheta = 60.0/180.0*M_PI; //60.0/180.0*M_PI; // decrese this value may improve accuracy
 extern const int segmentValidPointNum = 5;
 extern const int segmentValidLineNum = 3;
 extern const float segmentAlphaX = ang_res_x / 180.0 * M_PI;

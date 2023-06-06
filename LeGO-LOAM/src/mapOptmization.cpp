@@ -763,8 +763,8 @@ public:
     	    *surfaceMapCloud += *transformPointCloud(surfCloudKeyFrames[i],     &cloudKeyPoses6D->points[i]);
     	    *surfaceMapCloud += *transformPointCloud(outlierCloudKeyFrames[i],  &cloudKeyPoses6D->points[i]);
         }
-        pcl::io::savePCDFileASCII("/home/arthur/AMRL/Datasets/UTPeDa/101222/LeGO-LOAM/surfaceMap.pcd", *surfaceMapCloud);
-        cout << "saved to /home/arthur/AMRL/Datasets/UTPeDa/101222/LeGO-LOAM/surfaceMap.pcd" << endl;
+        pcl::io::savePCDFileASCII("/home/arthur/AMRL/Datasets/CODa/8_1/surfaceMap.pcd", *surfaceMapCloud);
+        cout << "saved to /home/arthur/AMRL/Datasets/CODa/8_1/surfaceMap.pcd" << endl;
         downSizeFilterCorner.setInputCloud(cornerMapCloud);
         downSizeFilterCorner.filter(*cornerMapCloudDS);
         downSizeFilterSurf.setInputCloud(surfaceMapCloud);
@@ -802,7 +802,7 @@ public:
 	    // downsample visualized points
         downSizeFilterGlobalMapKeyFrames.setInputCloud(globalMapKeyFrames);
         downSizeFilterGlobalMapKeyFrames.filter(*globalMapKeyFramesDS);
-        pcl::io::savePCDFileASCII("/home/arthur/AMRL/Datasets/UTPeDa/101222/LeGO-LOAM/globalMap.pcd", *globalMapKeyFrames);
+        pcl::io::savePCDFileASCII("/home/arthur/AMRL/Datasets/CODa/8_1/globalMap.pcd", *globalMapKeyFrames);
  
         sensor_msgs::PointCloud2 cloudMsgTemp;
         // pcl::toROSMsg(*globalMapKeyFramesDS, cloudMsgTemp);
@@ -1558,8 +1558,8 @@ int main(int argc, char** argv)
     std::thread loopthread(&mapOptimization::loopClosureThread, &MO);
     std::thread visualizeMapThread(&mapOptimization::visualizeGlobalMapThread, &MO);
 
-    std::string out_dir = "/home/arthur/AMRL/Datasets/CODa/poses/";
-    std::string out_path = out_dir + "1.txt";
+    std::string out_dir = "/home/arthur/AMRL/Datasets/CODa/";
+    std::string out_path = out_dir + "14.txt";
     int last_est_size = -1;
 
     ros::Rate rate(200);
