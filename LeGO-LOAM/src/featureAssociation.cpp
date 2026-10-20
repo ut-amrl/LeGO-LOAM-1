@@ -281,7 +281,7 @@ public:
         }
 
 
-        skipFrameNum = 1;
+        skipFrameNum = 0; // was 1: every scan's features go to mapOptmization, not every 2nd
 
         for (int i = 0; i < 6; ++i){
             transformCur[i] = 0;

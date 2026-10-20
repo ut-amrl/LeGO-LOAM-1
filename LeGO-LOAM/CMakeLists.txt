@@ -58,3 +58,9 @@ target_link_libraries(mapOptmization ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${Open
 
 add_executable(transformFusion src/transformFusion.cpp)
 target_link_libraries(transformFusion ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
+
+# the lidar's geometry (include/utility.h): VLP16 (default) or OS1_128
+set(LEGO_SENSOR "VLP16" CACHE STRING "VLP16 | OS1_128")
+if(LEGO_SENSOR STREQUAL "OS1_128")
+  add_definitions(-DLEGO_OS1_128)
+endif()
